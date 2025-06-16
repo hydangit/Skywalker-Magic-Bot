@@ -8,8 +8,8 @@ import requests
 from datetime import datetime
 
 # === KONFIGURASI TELEGRAM ===
-TOKEN = 'ISI_TOKEN_TELEGRAM'
-CHAT_ID = 'ISI_CHAT_ID'
+TOKEN = '7578477675:AAE1EdzKHGtW8cIXhVNV1TTPQyEExQnbV-0'
+CHAT_ID = '6682835719'
 
 # === KONFIG EXCHANGE BINANCE FUTURE ===
 exchange = ccxt.binance({
