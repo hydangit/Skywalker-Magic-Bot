@@ -1,5 +1,5 @@
 from keep_alive import keep_alive
-keep_alive()  # Menyalakan server Flask biar URL aktif di Render
+keep_alive()
 
 import ccxt
 import time
@@ -7,17 +7,17 @@ import random
 import requests
 from datetime import datetime
 
-# === KONFIGURASI TELEGRAM ===
+# --- Konfigurasi Telegram ---
 TOKEN = '7578477675:AAE1EdzKHGtW8cIXhVNV1TTPQyEExQnbV-0'
 CHAT_ID = '6682835719'
 
-# === KONFIG EXCHANGE BINANCE FUTURE ===
+# --- Setup exchange ---
 exchange = ccxt.binance({
     'enableRateLimit': True,
     'options': {'defaultType': 'future'}
 })
 
-# === TIMEFRAME & GAYA SLENGEAN ===
+# --- Timeframes dan gaya slengean ---
 timeframes = ['15m', '1h', '4h']
 slangs = [
     "🧨 SINYAL NYEMBUR LAGI NIH, GASIN AJA JANGAN NUNGGU DITINGGAL MANTAN!",
@@ -26,26 +26,20 @@ slangs = [
     "💣 SINYAL DATENG LEBIH CEPET DARI MANTAN NGECHAT!",
     "🚨 MARKET NGODE, MASA LU NGGAK NANGGEPIN?"
 ]
-
 comments = [
-    "Kalo sinyal udah seganteng ini masih lu skip juga, fix lu cocoknya buka warung kopi. ☕📉",
-    "Masih nunggu apa? Market udah nyodorin cuan, bukan kode doang!",
-    "Sinyalnya udah cakep, jangan cuma ngelirik, hajar bang!",
-    "Ini sinyal, bukan mimpi! Jangan bengong, buka posisi dong!",
-    "TP kesentuh, jangan lupa traktir gue gorengan, Bang!"
+    "Market udah nyodorin cuan, bukan kode doang!",
+    "Masih bengong? Sinyalnya udah siap ngasih gorengan.",
+    "TP kesentuh, jangan lupa traktir es teh manis!"
 ]
 
-# === FUNGSI KIRIM TELEGRAM ===
+# --- Kirim Telegram ---
 def kirim_telegram(pesan):
     url = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
-    try:
-        requests.post(url, data={'chat_id': CHAT_ID, 'text': pesan, 'parse_mode': 'Markdown'})
-    except Exception as e:
-        print(f"[Telegram Error] {e}")
+    requests.post(url, data={'chat_id': CHAT_ID, 'text': pesan, 'parse_mode': 'Markdown'})
 
-# === HITUNG TP/SL ===
+# --- Hitung SL & TP ---
 def hitung_tp_sl(entry, arah):
-    persentase = [0.01, 0.02, 0.035]  # TP1, TP2, TP3
+    persentase = [0.01, 0.02, 0.035]
     sl_percent = 0.008
     if arah == "long":
         tps = [entry * (1 + p) for p in persentase]
@@ -55,11 +49,14 @@ def hitung_tp_sl(entry, arah):
         sl = entry * (1 + sl_percent)
     return tps, sl
 
-# === SCAN MARKET & KIRIM SINYAL ===
+# --- Fungsi utama scan market ---
 def scan_market():
-    print(f"[{datetime.now().strftime('%H:%M:%S')}] Scanning market...")
-    markets = exchange.load_markets()
-    usdt_pairs = [s for s in markets if s.endswith("/USDT") and markets[s].get('contract', False)]
+    try:
+        markets = exchange.load_markets()
+        usdt_pairs = [s for s in markets if s.endswith("/USDT") and markets[s].get("contract", False)]
+    except Exception as e:
+        print(f"[ERROR LOAD_MARKETS] => {e}")
+        return
 
     for symbol in usdt_pairs:
         try:
@@ -74,24 +71,25 @@ def scan_market():
                 entry = harga_now
                 entry_range = f"{round(entry*0.998, 4)} – {round(entry*1.002, 4)}"
                 tps, sl = hitung_tp_sl(entry, arah)
+
                 acc = random.randint(84, 92)
                 leverage = random.choice([5, 10, 15, 20, 25, 30])
                 sr_atas = round(entry * 1.04, 4)
                 sr_bawah = round(entry * 0.96, 4)
 
-                pair = symbol.replace("/USDT", "USDT")
-                tf_str = tf.upper()
                 index_bold = tps.index(max(tps) if arah == "long" else min(tps))
-
                 tps_fmt = [
                     f"🎯 TP1: {'*'+str(round(tps[0], 4))+'*' if index_bold==0 else str(round(tps[0], 4))} (Cari Aman)",
                     f"🎯 TP2: {'*'+str(round(tps[1], 4))+'*' if index_bold==1 else str(round(tps[1], 4))} (Butuh Duit)",
                     f"🎯 TP3: {'*'+str(round(tps[2], 4))+'*' if index_bold==2 else str(round(tps[2], 4))} (Maruk)"
                 ]
 
-                pesan = f"""{random.choice(slangs)}
+                tf_str = tf.upper()
+                pair = symbol.replace("/USDT", "USDT")
 
-#{pair} {"🔺 LONG" if arah == "long" else "🔻 SHORT"} {leverage}x
+                sinyal = f"""{random.choice(slangs)}
+
+#{pair} {"🔺 LONG" if arah=="long" else "🔻 SHORT"} {leverage}x
 📊 TF: {tf_str}
 🎯 ENTRY: *{entry_range}*
 
@@ -105,15 +103,17 @@ def scan_market():
 
 💬 {random.choice(comments)}"""
 
-                kirim_telegram(pesan)
+                kirim_telegram(sinyal)
+                print(f"[SINYAL] {pair} ({arah.upper()}) terkirim!")
                 time.sleep(1)
 
         except Exception as e:
             print(f"[ERROR] {symbol} ({tf}) -> {e}")
             continue
 
-# === LOOP UTAMA ===
+# --- Loop utama ---
 while True:
+    print(f"[{datetime.now().strftime('%H:%M:%S')}] SCAN MULAI...")
     scan_market()
     print("Tidur 15 menit...\n")
     time.sleep(900)
