@@ -8,8 +8,8 @@ import requests
 from datetime import datetime
 
 # --- Telegram Config ---
-TOKEN = 'ISI_TOKEN_BANG'
-CHAT_ID = 'ISI_CHATID_BANG'
+TOKEN = '7578477675:AAE1EdzKHGtW8cIXhVNV1TTPQyEExQnbV-0'
+CHAT_ID = '6682835719'
 
 # --- Setup Binance Futures ---
 exchange = ccxt.binance({
